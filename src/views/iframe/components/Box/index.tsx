@@ -13,16 +13,16 @@ const getStyle = (width: number, height: number): CSSProperties => {
 
 const Box: FC<DragItem> = memo((props) => {
 
-    const {modifyItem} = useStore();
+    const {layoutItem} = useStore();
 
     const onImgOnload = useCallback((e: SyntheticEvent<HTMLImageElement, Event>) => {
         const img = e.target as HTMLImageElement | null;
         if (img) {
             const width = img.offsetWidth;
             const height = img.offsetHeight;
-            modifyItem({id: props.id, width, height});
+            layoutItem(props.id, width, height);
         }
-    }, [modifyItem, props.id]);
+    }, [layoutItem, props.id]);
 
     const renderItem = useCallback((item: DragItem) => {
         switch (item.type) {

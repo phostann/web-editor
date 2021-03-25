@@ -1,89 +1,97 @@
-import {Adsorption, DragItem} from "../store/Store";
+import {DragItem, SnapShot} from "../store/Store";
 import {XYCoord} from "react-dnd";
+import _ from "lodash";
 
-export const adsorb = (itemList: DragItem[], item: DragItem, currentOffset: XYCoord, threshold: number = 5) => {
+export interface Adsorption {
+    left?: number;
+    top?: number;
+    showHorizontal?: number;
+    showVertical?: number;
+}
+
+type Adsorb = (snapShot: SnapShot, item: DragItem, currentOffset: XYCoord, threshold?: number) => Adsorption | null
+
+export const adsorb: Adsorb = (snapShot, item, currentOffset, threshold = 3) => {
     const copy = {...currentOffset};
+    const size = snapShot.rows.length;
+    const left = copy.x;
+    const top = copy.y;
+    const width = item.width;
+    const height = item.height;
+    const right = left + width;
+    const bottom = top + height;
+    const center = left + width / 2;
+    const middle = top + height / 2;
+    let dx = Number.MAX_VALUE;
+    let dy = Number.MAX_VALUE;
     let adsorbed = false;
-    let adsorption: Adsorption = {}
-    for (let i = 0; i < itemList.length; i++) {
-        const _item = itemList[i];
-        if (_item.id !== item.id) {
-            // 左 -》 右
-            if (Math.abs(copy.x - (_item.left + _item.width)) <= threshold) {
-                copy.x = _item.left + _item.width;
-                adsorption.left = copy.x;
-                adsorption.showVertical = copy.x;
-                adsorbed = true;
+    const adsorption: Adsorption = {};
+    for (let i = 0; i < size; i++) {
+        const row = snapShot.rows[i];
+        const column = snapShot.columns[i];
+        if (column.id !== item.id) {
+            // center
+            if (Math.abs(center - column.left) <= threshold) {
+                if (dx > Math.abs(center - column.left)) {
+                    copy.x = column.left - width / 2;
+                    dx = Math.abs(center - column.left);
+                    adsorption.left = copy.x;
+                    adsorption.showVertical = column.left;
+                    adsorbed = true;
+                }
+                // left
+            } else if (column.left <= left && Math.abs(left - column.left) <= threshold) {
+                if (dx > Math.abs(left - column.left)) {
+                    copy.x = column.left;
+                    dx = Math.abs(left - column.left);
+                    adsorption.left = copy.x;
+                    adsorption.showVertical = column.left
+                    adsorbed = true;
+                }
+                // right
+            } else if (column.left >= right && Math.abs(right - column.left) <= threshold) {
+                if (dx > Math.abs(right - column.left)) {
+                    copy.x = column.left - width;
+                    dx = Math.abs(right - column.left);
+                    adsorption.left = copy.x;
+                    adsorption.showVertical = column.left;
+                    adsorbed = true;
+                }
             }
-            // 左 -》左
-            else if (Math.abs(copy.x - _item.left) <= threshold) {
-                copy.x = _item.left;
-                adsorption.left = copy.x;
-                adsorption.showVertical = copy.x;
-                adsorbed = true;
-            }
-            // 右 -》右
-            else if (Math.abs(copy.x + item.width - (_item.left + _item.width)) <= threshold) {
-                copy.x = _item.left + _item.width - item.width;
-                adsorption.left = copy.x;
-                adsorption.showVertical = _item.left + _item.width;
-                adsorbed = true;
-            }
-            // 右 -》 左
-            else if (Math.abs(copy.x + item.width - _item.left) <= threshold) {
-                copy.x = _item.left - item.width;
-                adsorption.left = copy.x;
-                adsorption.showVertical = _item.left;
-                adsorbed = true;
-            }
-            // 水平中线对齐
-            else if (Math.abs((copy.x + item.width / 2) - (_item.left + _item.width / 2)) <= threshold) {
-                copy.x = _item.left + (_item.width - item.width) / 2;
-                adsorption.left = copy.x;
-                adsorption.showVertical = _item.left + _item.width / 2;
-                adsorbed = true;
-            }
+        }
 
-            // 上 -》 上
-            if (Math.abs(copy.y - _item.top) <= threshold) {
-                copy.y = _item.top;
-                adsorption.top = copy.y;
-                adsorption.showHorizontal = copy.y;
-                adsorbed = true;
-            }
-            // 上 -》 下
-            else if (Math.abs(copy.y - (_item.top + _item.height)) <= threshold) {
-                copy.y = _item.top + _item.height;
-                adsorption.top = copy.y;
-                adsorption.showHorizontal = copy.y;
-                adsorbed = true;
-            }
-            // 下 -》 上
-            else if (Math.abs(copy.y + item.height - _item.top) <= threshold) {
-                copy.y = _item.top - item.height;
-                adsorption.top = copy.y;
-                adsorption.showHorizontal = _item.top;
-                adsorbed = true;
-            }
-            // 下 -》 下
-            else if (Math.abs(copy.y + item.height - (_item.top + _item.height)) <= threshold) {
-                copy.y = _item.top + _item.height - item.height;
-                adsorption.top = copy.y;
-                adsorption.showHorizontal = _item.top + _item.height;
-                adsorbed = true;
-            }
-            // 垂直中线对齐
-            else if (Math.abs(copy.y + item.height / 2 - (_item.top + _item.height / 2)) <= threshold) {
-                copy.y = _item.top + (_item.height - item.height) / 2;
-                adsorption.top = copy.y;
-                adsorption.showHorizontal = _item.top + _item.height / 2;
-                adsorbed = true;
-            }
-
-            if (adsorbed) {
-                break;
+        if (row.id !== item.id) {
+            // middle
+            if (Math.abs(middle - row.top) <= threshold) {
+                if (dy > Math.abs(middle - row.top)) {
+                    copy.y = row.top - height / 2;
+                    dy = Math.abs(middle - row.top);
+                    adsorption.top = copy.y;
+                    adsorption.showHorizontal = row.top;
+                    adsorbed = true;
+                }
+                // top
+            } else if (row.top >= top && Math.abs(top - row.top) <= threshold) {
+                if (dy > Math.abs(top - row.top)) {
+                    copy.y = row.top;
+                    dy = Math.abs(top - row.top);
+                    adsorption.top = copy.y;
+                    adsorption.showHorizontal = row.top;
+                    adsorbed = true;
+                }
+                // bottom
+            } else if (row.top <= bottom && Math.abs(bottom - row.top) <= threshold) {
+                if (dy > Math.abs(bottom - row.top)) {
+                    copy.y = row.top - height;
+                    dy = Math.abs(bottom - row.top);
+                    adsorption.top = copy.y;
+                    adsorption.showHorizontal = row.top;
+                    adsorbed = true;
+                }
             }
         }
     }
     return adsorbed ? adsorption : null;
-}
+};
+
+export const adsorb_n = _.throttle<Adsorb>(adsorb, 16);

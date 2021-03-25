@@ -9,6 +9,7 @@ import {Item, Menu, Separator, useContextMenu} from "react-contexify";
 import styles from "./index.module.less";
 import "react-contexify/dist/ReactContexify.css";
 import {adsorb} from "../../utils/adsorb";
+import _ from "lodash";
 
 type ClientXY = {
     x: number;
@@ -33,6 +34,13 @@ const Container = observer(() => {
         moveItemToMiddle,
         moveItemToRight,
         moveItemToTop,
+        stepToLeft,
+        stepToUp,
+        stepToRight,
+        stepToDown,
+        resizeItem,
+        moveItem,
+        snapShot
     } = useStore();
 
     const [, drop] = useDrop(() => ({
@@ -40,15 +48,15 @@ const Container = observer(() => {
         drop(item: DragItem, monitor) {
             const currentOffset = monitor.getSourceClientOffset();
             if (currentOffset) {
-                const _adsorption = adsorb(itemList, item, currentOffset);
+                const _adsorption = adsorb(snapShot, item, currentOffset);
                 if (_adsorption) {
                     _adsorption.left && (currentOffset.x = _adsorption.left);
                     _adsorption.top && (currentOffset.y = _adsorption.top);
                 }
-                modifyItem({id: item.id, left: currentOffset.x, top: currentOffset.y});
+                moveItem({id: item.id, left: currentOffset.x, top: currentOffset.y});
             }
         }
-    }), [modifyItem]);
+    }), [snapShot, moveItem]);
 
     const {show} = useContextMenu({
         id: MENU_ID
@@ -73,7 +81,7 @@ const Container = observer(() => {
 
     // 缩放
     useEffect(() => {
-        const onMouseMove = (e: MouseEvent) => {
+        const onMouseMove = _.throttle((e: MouseEvent) => {
             if (!cachedItem || !mouseDirection) {
                 return;
             }
@@ -91,7 +99,7 @@ const Container = observer(() => {
                     if (width <= 0 || height <= 0) {
                         break;
                     }
-                    modifyItem({id: currentId, width, left, height, top});
+                    resizeItem({id: currentId, width, left, height, top});
                     break;
                 case MouseDirection.TOP_CENTER:
                     height = cachedItem.height - diff.y;
@@ -99,7 +107,7 @@ const Container = observer(() => {
                     if (height <= 0) {
                         break;
                     }
-                    modifyItem({id: currentId, height, top});
+                    resizeItem({id: currentId, height, top});
                     break;
                 case MouseDirection.TOP_RIGHT:
                     width = cachedItem.width + diff.x;
@@ -108,14 +116,14 @@ const Container = observer(() => {
                     if (width <= 0 || height <= 0) {
                         break;
                     }
-                    modifyItem({id: currentId, width, height, top});
+                    resizeItem({id: currentId, width, height, top});
                     break;
                 case MouseDirection.MIDDLE_RIGHT:
                     width = cachedItem.width + diff.x;
                     if (width <= 0) {
                         break;
                     }
-                    modifyItem({id: currentId, width});
+                    resizeItem({id: currentId, width});
                     break;
                 case MouseDirection.BOTTOM_RIGHT:
                     width = cachedItem.width + diff.x;
@@ -123,14 +131,14 @@ const Container = observer(() => {
                     if (width <= 0 || height <= 0) {
                         break;
                     }
-                    modifyItem({id: currentId, width, height});
+                    resizeItem({id: currentId, width, height});
                     break;
                 case MouseDirection.BOTTOM_CENTER:
                     height = cachedItem.height + diff.y;
                     if (height <= 0) {
                         break;
                     }
-                    modifyItem({id: currentId, height});
+                    resizeItem({id: currentId, height});
                     break;
                 case MouseDirection.BOTTOM_LEFT:
                     width = cachedItem.width - diff.x;
@@ -139,7 +147,7 @@ const Container = observer(() => {
                     if (width <= 0 || height <= 0) {
                         break;
                     }
-                    modifyItem({id: currentId, width, left, height});
+                    resizeItem({id: currentId, width, left, height});
                     break;
                 case MouseDirection.MIDDLE_LEFT:
                     width = cachedItem.width - diff.x;
@@ -147,36 +155,32 @@ const Container = observer(() => {
                     if (width <= 0) {
                         break;
                     }
-                    modifyItem({id: currentId, width, left});
+                    resizeItem({id: currentId, width, left});
                     break;
             }
-        }
-
+        }, 16);
 
         window.addEventListener("mousemove", onMouseMove, false);
         return () => window.removeEventListener("mousemove", onMouseMove, false);
-    }, [cachedItem, clientXY, currentId, modifyItem, mouseDirection]);
+    }, [cachedItem, clientXY, currentId, mouseDirection, resizeItem]);
 
     // 键盘移动
     useEffect(() => {
-        const onKeyDown = (e: KeyboardEvent) => {
+        const onKeyDown = _.throttle((e: KeyboardEvent) => {
             if (!currentId.length) return;
-
-            const find = itemList.find(item => item.id === currentId);
-            if (!find) return;
 
             switch (e.key) {
                 case "ArrowUp":
-                    modifyItem({id: currentId, top: find.top - 1});
+                    stepToUp(currentId);
                     break;
                 case "ArrowRight":
-                    modifyItem({id: currentId, left: find.left + 1});
+                    stepToRight(currentId);
                     break;
                 case "ArrowDown":
-                    modifyItem({id: currentId, top: find.top + 1});
+                    stepToDown(currentId);
                     break;
                 case "ArrowLeft":
-                    modifyItem({id: currentId, left: find.left - 1});
+                    stepToLeft(currentId);
                     break;
                 case "Delete":
                     removeItem(currentId);
@@ -184,11 +188,11 @@ const Container = observer(() => {
                 default:
                     return;
             }
-        }
+        }, 16);
 
         window.addEventListener("keydown", onKeyDown, false);
         return () => window.removeEventListener("keydown", onKeyDown, false);
-    }, [currentId, itemList, modifyItem, removeItem]);
+    }, [currentId, itemList, modifyItem, removeItem, stepToDown, stepToLeft, stepToRight, stepToUp]);
 
     // 右键菜单
     const onContextMenu = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {

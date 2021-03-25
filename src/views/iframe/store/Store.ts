@@ -16,25 +16,24 @@ export interface DragItem {
     zIndex: number;
 }
 
-export interface Adsorption {
-    left?: number;
-    top?: number;
-    showHorizontal?: number;
-    showVertical?: number;
-}
 
 type ModifyParam = Partial<DragItem> & { id: string };
 
+export interface SnapShot {
+    columns: { id: string, left: number; }[];
+    rows: { id: string, top: number; }[];
+}
+
 export class Store {
 
-    itemList: DragItem[] = Array.from(new Array(10), (_, v) => ({
+    itemList: DragItem[] = Array.from(new Array(100), (_, v) => ({
         id: uuidv4(),
         left: v * 4,
-        top: v * 8,
+        top: 0,
         width: 0,
         height: 0,
         type: ItemTypes.IMAGE,
-        src: "https://hexo-blog-1259448770.cos.ap-guangzhou.myqcloud.com/uPic/4.jpeg",
+        src: "https://hexo-blog-1259448770.cos.ap-guangzhou.myqcloud.com/uPic/2.jpeg",
         text: "",
         fontSize: 12,
         name: "",
@@ -101,11 +100,13 @@ export class Store {
 
     currentId = "";
 
-    adsorption: Adsorption | null = null;
+    snapShot: SnapShot = {rows: [], columns: []};
 
     constructor() {
         makeAutoObservable(this);
         this.modifyItem = this.modifyItem.bind(this);
+        this.layoutItem = this.layoutItem.bind(this);
+        this.resizeItem = this.resizeItem.bind(this);
         this.changeScale = this.changeScale.bind(this);
         this.changeCurrentId = this.changeCurrentId.bind(this);
         this.moveItemToFront = this.moveItemToFront.bind(this);
@@ -117,11 +118,28 @@ export class Store {
         this.moveItemToBottom = this.moveItemToBottom.bind(this);
         this.moveItemToMiddle = this.moveItemToMiddle.bind(this);
         this.removeItem = this.removeItem.bind(this);
-        this.changeAdsorption = this.changeAdsorption.bind(this);
+        this.stepToLeft = this.stepToLeft.bind(this);
+        this.stepToUp = this.stepToUp.bind(this);
+        this.stepToRight = this.stepToRight.bind(this);
+        this.stepToDown = this.stepToDown.bind(this);
+        this.moveItem = this.moveItem.bind(this);
     }
 
     private findItemById(id: string) {
         return this.itemList.find(item => item.id === id);
+    }
+
+    private generateSnapShot() {
+        const snapShop: SnapShot = {rows: [], columns: []};
+        this.itemList.forEach(({id, left, width, top, height}) => {
+            snapShop.columns.push({id, left});
+            snapShop.columns.push({id, left: left + width});
+            snapShop.columns.push({id, left: left + width / 2});
+            snapShop.rows.push({id, top});
+            snapShop.rows.push({id, top: top + height});
+            snapShop.rows.push({id, top: top + height / 2});
+        });
+        this.snapShot = snapShop;
     }
 
     modifyItem(param: ModifyParam) {
@@ -131,6 +149,20 @@ export class Store {
         }
     }
 
+    layoutItem(id: string, width: number, height: number) {
+        this.modifyItem({id, width, height});
+        this.generateSnapShot();
+    }
+
+    resizeItem(param: ModifyParam) {
+        this.modifyItem(param);
+        this.generateSnapShot();
+    }
+
+    moveItem(param: ModifyParam) {
+        this.modifyItem(param);
+        this.generateSnapShot();
+    }
 
     changeScale(param: number) {
         this.scale = param;
@@ -169,6 +201,7 @@ export class Store {
         if (find && find.left !== 0) {
             this.modifyItem({id, left: 0});
         }
+        this.generateSnapShot();
     }
 
     moveItemToRight(id: string) {
@@ -176,6 +209,7 @@ export class Store {
         if (find && find.left !== 1920 - find.width) {
             this.modifyItem({id, left: 1920 - find.width});
         }
+        this.generateSnapShot();
     }
 
     moveItemToCenter(id: string) {
@@ -183,6 +217,7 @@ export class Store {
         if (find && find.left !== 1920 / 2 - find.width / 2) {
             this.modifyItem({id, left: 1920 / 2 - find.width / 2});
         }
+        this.generateSnapShot();
     }
 
     moveItemToTop(id: string) {
@@ -190,6 +225,7 @@ export class Store {
         if (find && find.top !== 0) {
             this.modifyItem({id, top: 0});
         }
+        this.generateSnapShot();
     }
 
     moveItemToBottom(id: string) {
@@ -197,6 +233,7 @@ export class Store {
         if (find && find.top !== 1080 - find.height) {
             this.modifyItem({id, top: 1080 - find.height});
         }
+        this.generateSnapShot();
     }
 
     moveItemToMiddle(id: string) {
@@ -204,6 +241,39 @@ export class Store {
         if (find && find.top !== 1080 / 2 - find.height / 2) {
             this.modifyItem({id, top: 1080 / 2 - find.height / 2});
         }
+        this.generateSnapShot();
+    }
+
+    stepToLeft(id: string) {
+        const find = this.itemList.find(item => item.id === id);
+        if (find) {
+            this.modifyItem({id, left: find.left - 1});
+        }
+        this.generateSnapShot();
+    }
+
+    stepToUp(id: string) {
+        const find = this.itemList.find(item => item.id === id);
+        if (find) {
+            this.modifyItem({id, top: find.top - 1});
+        }
+        this.generateSnapShot();
+    }
+
+    stepToRight(id: string) {
+        const find = this.itemList.find(item => item.id === id);
+        if (find) {
+            this.modifyItem({id, left: find.left + 1});
+        }
+        this.generateSnapShot();
+    }
+
+    stepToDown(id: string) {
+        const find = this.itemList.find(item => item.id === id);
+        if (find) {
+            this.modifyItem({id, top: find.top + 1});
+        }
+        this.generateSnapShot();
     }
 
     removeItem(id: string) {
@@ -217,17 +287,6 @@ export class Store {
             });
             this.itemList.splice(findIndex, 1);
         }
-    }
-
-    changeAdsorption(adsorption: Adsorption | null) {
-        if (adsorption === null && this.adsorption === null) {
-            return;
-        }
-        if (this.adsorption?.left !== adsorption?.left ||
-            this.adsorption?.top !== adsorption?.top ||
-            this.adsorption?.showHorizontal !== adsorption?.showHorizontal ||
-            this.adsorption?.showVertical !== adsorption?.showVertical) {
-            this.adsorption = adsorption;
-        }
+        this.generateSnapShot();
     }
 }

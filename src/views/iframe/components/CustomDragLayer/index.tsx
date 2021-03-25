@@ -1,10 +1,10 @@
-import React, {CSSProperties, useState} from "react";
+import React, {CSSProperties} from "react";
 import {useDragLayer, XYCoord} from "react-dnd";
 import styles from "./index.module.less";
 import BoxDragPreview from "../BoxDragPreview";
 import {useStore} from "../../App";
-import {Adsorption, DragItem} from "../../store/Store";
-import {adsorb} from "../../utils/adsorb";
+import {DragItem} from "../../store/Store";
+import {adsorb_n, Adsorption} from "../../utils/adsorb";
 
 const getStyle = (currentOffset: XYCoord | null): CSSProperties => {
 
@@ -26,37 +26,27 @@ const getStyle = (currentOffset: XYCoord | null): CSSProperties => {
 
 const CustomDragLayer = () => {
 
-    const {itemList} = useStore();
-    const [adsorption, setAdsorption] = useState<Adsorption | null>(null);
+    const {snapShot} = useStore();
 
-    const {isDragging, item, currentOffset} = useDragLayer(monitor => {
+    const {isDragging, item, currentOffset, adsorption} = useDragLayer(monitor => {
         const currentOffset = monitor.getSourceClientOffset();
         const item = monitor.getItem() as DragItem;
-        if (currentOffset && item && itemList.length) {
-            const _adsorption = adsorb(itemList, item, currentOffset);
-            if (_adsorption === null && adsorption !== null) {
-                setAdsorption(null);
-            } else if (_adsorption !== null && adsorption === null) {
-                setAdsorption(_adsorption);
-            } else if (_adsorption !== null && adsorption !== null) {
-                if (_adsorption.left !== adsorption.left ||
-                    _adsorption.top !== adsorption.top ||
-                    _adsorption.showHorizontal !== adsorption.showHorizontal ||
-                    _adsorption.showVertical !== adsorption.showVertical) {
-                    setAdsorption(_adsorption);
-                }
-            }
-            if (_adsorption !== null) {
-                _adsorption.left && (currentOffset.x = _adsorption.left);
-                _adsorption.top && (currentOffset.y = _adsorption.top);
+        let adsorption = null;
+        if (currentOffset && item) {
+
+            adsorption = adsorb_n(snapShot, item, currentOffset) as Adsorption | null;
+            if (adsorption) {
+                adsorption.left && (currentOffset.x = adsorption.left);
+                adsorption.top && (currentOffset.y = adsorption.top);
             }
         }
         return {
             item,
             currentOffset,
-            isDragging: monitor.isDragging()
+            isDragging: monitor.isDragging(),
+            adsorption: adsorption
         };
-    });
+    }) as { item: DragItem, currentOffset: XYCoord | null, isDragging: boolean, adsorption: Adsorption | null };
 
     if (!isDragging) {
         return null;
@@ -66,14 +56,10 @@ const CustomDragLayer = () => {
         <div className={styles.boxContainer} style={getStyle(currentOffset)}>
             <BoxDragPreview {...item}/>
         </div>
-        {
-            adsorption && adsorption.showHorizontal ?
-                <div className={styles.horizontal} style={{top: adsorption.showHorizontal}}/> : null
-        }
-        {
-            adsorption && adsorption.showVertical ?
-                <div className={styles.vertical} style={{left: adsorption.showVertical}}/> : null
-        }
+        <div className={styles.horizontal}
+             style={{top: adsorption?.showHorizontal || 0, display: adsorption?.showHorizontal ? "block" : "none"}}/>
+        <div className={styles.vertical}
+             style={{left: adsorption?.showVertical || 0, display: adsorption?.showVertical ? "block" : "none"}}/>
     </div>;
 }
 export default CustomDragLayer;
