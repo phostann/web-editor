@@ -26,75 +26,74 @@ export interface SnapShot {
 
 export class Store {
 
-    itemList: DragItem[] = Array.from(new Array(100), (_, v) => ({
-        id: uuidv4(),
-        left: v * 4,
-        top: 0,
-        width: 0,
-        height: 0,
-        type: ItemTypes.IMAGE,
-        src: "https://hexo-blog-1259448770.cos.ap-guangzhou.myqcloud.com/uPic/2.jpeg",
-        text: "",
-        fontSize: 12,
-        name: "",
-        zIndex: v
-    }));
+    // itemList: DragItem[] = Array.from(new Array(100), (_, v) => ({
+    //     id: uuidv4(),
+    //     left: v * 4,
+    //     top: 0,
+    //     width: 0,
+    //     height: 0,
+    //     type: ItemTypes.IMAGE,
+    //     src: "https://hexo-blog-1259448770.cos.ap-guangzhou.myqcloud.com/uPic/2.jpeg",
+    //     text: "",
+    //     fontSize: 12,
+    //     name: "",
+    //     zIndex: v
+    // }));
 
-
-    // itemList: DragItem[] = [
-    //     {
-    //         id: uuidv4(),
-    //         left: 0,
-    //         top: 0,
-    //         width: 0,
-    //         height: 0,
-    //         type: ItemTypes.IMAGE,
-    //         src: "https://hexo-blog-1259448770.cos.ap-guangzhou.myqcloud.com/uPic/1.jpeg",
-    //         text: "",
-    //         fontSize: 12,
-    //         name: "",
-    //         zIndex: 0
-    //     },
-    //     {
-    //         id: uuidv4(),
-    //         left: 0,
-    //         top: 0,
-    //         width: 0,
-    //         height: 0,
-    //         type: ItemTypes.IMAGE,
-    //         src: "https://hexo-blog-1259448770.cos.ap-guangzhou.myqcloud.com/uPic/2.jpeg",
-    //         text: "",
-    //         fontSize: 12,
-    //         name: "",
-    //         zIndex: 1
-    //     },
-    //     {
-    //         id: uuidv4(),
-    //         left: 0,
-    //         top: 0,
-    //         width: 0,
-    //         height: 0,
-    //         type: ItemTypes.IMAGE,
-    //         src: "https://hexo-blog-1259448770.cos.ap-guangzhou.myqcloud.com/uPic/3.jpeg",
-    //         text: "",
-    //         fontSize: 12,
-    //         name: "",
-    //         zIndex: 2
-    //     },
-    //     {
-    //         id: uuidv4(),
-    //         left: 0,
-    //         top: 0,
-    //         width: 0,
-    //         height: 0,
-    //         type: ItemTypes.IMAGE,
-    //         src: "https://hexo-blog-1259448770.cos.ap-guangzhou.myqcloud.com/uPic/4.jpeg",
-    //         text: "",
-    //         fontSize: 12,
-    //         name: "",
-    //         zIndex: 3
-    //     }
-    // ];
+    itemList: DragItem[] = [
+        {
+            id: uuidv4(),
+            left: 0,
+            top: 0,
+            width: 0,
+            height: 0,
+            type: ItemTypes.IMAGE,
+            src: "https://hexo-blog-1259448770.cos.ap-guangzhou.myqcloud.com/uPic/1.jpeg",
+            text: "",
+            fontSize: 12,
+            name: "",
+            zIndex: 0
+        },
+        {
+            id: uuidv4(),
+            left: 0,
+            top: 0,
+            width: 0,
+            height: 0,
+            type: ItemTypes.IMAGE,
+            src: "https://hexo-blog-1259448770.cos.ap-guangzhou.myqcloud.com/uPic/2.jpeg",
+            text: "",
+            fontSize: 12,
+            name: "",
+            zIndex: 1
+        },
+        {
+            id: uuidv4(),
+            left: 0,
+            top: 0,
+            width: 0,
+            height: 0,
+            type: ItemTypes.IMAGE,
+            src: "https://hexo-blog-1259448770.cos.ap-guangzhou.myqcloud.com/uPic/3.jpeg",
+            text: "",
+            fontSize: 12,
+            name: "",
+            zIndex: 2
+        },
+        {
+            id: uuidv4(),
+            left: 0,
+            top: 0,
+            width: 0,
+            height: 0,
+            type: ItemTypes.IMAGE,
+            src: "https://hexo-blog-1259448770.cos.ap-guangzhou.myqcloud.com/uPic/4.jpeg",
+            text: "",
+            fontSize: 12,
+            name: "",
+            zIndex: 3
+        }
+    ];
 
     scale = 1;
 
