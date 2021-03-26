@@ -1,35 +1,73 @@
-import React, {useEffect, useRef, useState} from 'react';
-import {MessageInterface} from "../../interfaces/MessageInterface";
-import {MessageType} from "../../types/MessageType";
-import styles from "./App.module.less";
+import React, {useState} from 'react';
+import {Avatar, Button, Layout, Popover} from "antd";
+import {CaretDownOutlined, FontColorsOutlined, PictureOutlined, StarOutlined} from "@ant-design/icons";
+import styles from "./app.module.less";
+import TxtPopover from "./components/TxtPopover";
+import ImgPopover from "./components/ImgPopover";
+
+const {Header} = Layout;
 
 function App() {
 
-    const ref = useRef<HTMLIFrameElement | null>(null)
+    const [txtVisible, setTxtVisible] = useState(false);
+    const [imgVisible, setImgVisible] = useState(false);
 
-    const [scale, setScale] = useState((1500 / 1920 * 100 | 0) / 100);
-
-    const postMessage = (msg: MessageInterface) => {
-        if (ref.current) {
-            ref.current?.contentWindow?.postMessage(JSON.stringify(msg), "*");
-        }
+    function onTxtVisibleChange(visible: boolean) {
+        setTxtVisible(visible);
     }
 
-    useEffect(() => {
-        if (ref.current !== null) {
-            ref.current.onload = () => {
-                postMessage({data: "加载成功", type: MessageType.SCALE_CHANGE});
-            }
-        }
-    }, []);
-    return <div className={styles.container}>
-        <div style={{width: 1920 * scale, height: 1080 * scale, overflow: "hidden"}}>
-            <iframe ref={ref} src={`/iframe.html?scale=${scale}`} frameBorder={0}
-                    style={{transform: `scale(${scale})`}}
-                    title={"iframe"} className={styles.iframe}/>
-        </div>
+    function onTxtSelect() {
+        setTxtVisible(false);
+    }
 
-    </div>
+    function onImgVisibleChange(visible: boolean) {
+        setImgVisible(visible);
+    }
+
+    function onImgSelect() {
+        setImgVisible(false);
+    }
+
+    return <Layout className={styles.container}>
+        <Header className={styles.header}>
+            <Avatar
+                src="https://hexo-blog-1259448770.cos.ap-guangzhou.myqcloud.com/uPic/4.jpeg"/>
+            <nav className={styles.nav}>
+                <Popover placement={"bottom"}
+                         trigger={"click"}
+                         visible={txtVisible}
+                         onVisibleChange={onTxtVisibleChange}
+                         content={<TxtPopover onClose={onTxtSelect}/>}>
+                    <Button size={"small"}
+                            type={"primary"}
+                            className={styles.nav_text_btn}
+                            icon={<FontColorsOutlined/>}>
+                        文字<CaretDownOutlined/>
+                    </Button>
+                </Popover>
+
+                <Popover placement={"bottom"}
+                         trigger={"click"}
+                         visible={imgVisible}
+                         onVisibleChange={onImgVisibleChange}
+                         content={<ImgPopover onClose={onImgSelect}/>}>
+                    <Button size={"small"}
+                            type={"primary"}
+                            className={styles.nav_img_btn}
+                            icon={<PictureOutlined/>}>
+                        图片<CaretDownOutlined/></Button>
+                </Popover>
+
+                <Button size={"small"}
+                        type={"primary"}
+                        icon={<StarOutlined/>}>
+                    形状<CaretDownOutlined/>
+                </Button>
+            </nav>
+            <Button size={"small"} type={"primary"} className={styles.header_save_btn}>保存</Button>
+            <Button size={"small"} type={"primary"}>预览</Button>
+        </Header>
+    </Layout>;
 }
 
 export default App;
