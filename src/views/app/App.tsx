@@ -1,13 +1,15 @@
-import React, {useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {Avatar, Button, Layout, Popover} from "antd";
 import {CaretDownOutlined, FontColorsOutlined, PictureOutlined, StarOutlined} from "@ant-design/icons";
-import styles from "./app.module.less";
 import TxtPopover from "./components/TxtPopover";
-import ImgPopover from "./components/ImgPopover";
+import ImgPopover, {ImgPopoverHandle} from "./components/ImgPopover";
+import styles from "./app.module.less";
 
 const {Header} = Layout;
 
 function App() {
+
+    const imgPopover = useRef<ImgPopoverHandle>(null);
 
     const [txtVisible, setTxtVisible] = useState(false);
     const [imgVisible, setImgVisible] = useState(false);
@@ -27,6 +29,12 @@ function App() {
     function onImgSelect() {
         setImgVisible(false);
     }
+
+    useEffect(() => {
+        if (!imgVisible) {
+            imgPopover.current?.exitManageMode();
+        }
+    }, [imgVisible]);
 
     return <Layout className={styles.container}>
         <Header className={styles.header}>
@@ -50,7 +58,7 @@ function App() {
                          trigger={"click"}
                          visible={imgVisible}
                          onVisibleChange={onImgVisibleChange}
-                         content={<ImgPopover onClose={onImgSelect}/>}>
+                         content={<ImgPopover ref={imgPopover}/>}>
                     <Button size={"small"}
                             type={"primary"}
                             className={styles.nav_img_btn}

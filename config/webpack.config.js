@@ -99,7 +99,7 @@ module.exports = function (webpackEnv) {
     const shouldUseReactRefresh = env.raw.FAST_REFRESH;
 
     // common function to get style loaders
-    const getStyleLoaders = (cssOptions, preProcessor) => {
+    const getStyleLoaders = (cssOptions, preProcessor, preProcessorOptions) => {
         const loaders = [
             isEnvDevelopment && require.resolve('style-loader'),
             isEnvProduction && {
@@ -153,6 +153,7 @@ module.exports = function (webpackEnv) {
                     loader: require.resolve(preProcessor),
                     options: {
                         sourceMap: true,
+                        ...(preProcessorOptions || {})
                     },
                 }
             );
@@ -551,7 +552,16 @@ module.exports = function (webpackEnv) {
                                         ? shouldUseSourceMap
                                         : isEnvDevelopment,
                                 },
-                                'less-loader'
+                                'less-loader',
+                                {
+                                    lessOptions: {
+                                        modifyVars: {
+                                            "primary-color": "#438cf6",
+                                            "layout-header-background": "#2e3e4e"
+                                        },
+                                        javascriptEnabled: true
+                                    }
+                                }
                             ),
                             // Don't consider CSS imports dead code even if the
                             // containing package claims to have no side effects.
@@ -605,6 +615,34 @@ module.exports = function (webpackEnv) {
                     {},
                     {
                         inject: true,
+                        template: paths.iframeHtml,
+                        filename: "index.html",
+                        chunks: ["main"]
+                    },
+                    isEnvProduction
+                        ? {
+                            minify: {
+                                removeComments: true,
+                                collapseWhitespace: true,
+                                removeRedundantAttributes: true,
+                                useShortDoctype: true,
+                                removeEmptyAttributes: true,
+                                removeStyleLinkTypeAttributes: true,
+                                keepClosingSlash: true,
+                                minifyJS: true,
+                                minifyCSS: true,
+                                minifyURLs: true,
+                            },
+                        }
+                        : undefined
+                )
+            ),
+            // Generates an `app.html` file with the <script> injected.
+            new HtmlWebpackPlugin(
+                Object.assign(
+                    {},
+                    {
+                        inject: true,
                         template: paths.appHtml,
                         filename: "app.html",
                         chunks: ["app"]
@@ -627,7 +665,7 @@ module.exports = function (webpackEnv) {
                         : undefined
                 )
             ),
-            // Generates an `index.html` file with the <script> injected.
+            // Generates an `iframe.html` file with the <script> injected.
             new HtmlWebpackPlugin(
                 Object.assign(
                     {},
@@ -636,34 +674,6 @@ module.exports = function (webpackEnv) {
                         template: paths.iframeHtml,
                         filename: "iframe.html",
                         chunks: ["iframe"]
-                    },
-                    isEnvProduction
-                        ? {
-                            minify: {
-                                removeComments: true,
-                                collapseWhitespace: true,
-                                removeRedundantAttributes: true,
-                                useShortDoctype: true,
-                                removeEmptyAttributes: true,
-                                removeStyleLinkTypeAttributes: true,
-                                keepClosingSlash: true,
-                                minifyJS: true,
-                                minifyCSS: true,
-                                minifyURLs: true,
-                            },
-                        }
-                        : undefined
-                )
-            ),
-            // Generates an `index.html` file with the <script> injected.
-            new HtmlWebpackPlugin(
-                Object.assign(
-                    {},
-                    {
-                        inject: true,
-                        template: paths.iframeHtml,
-                        filename: "index.html",
-                        chunks: ["main"]
                     },
                     isEnvProduction
                         ? {
