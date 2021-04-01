@@ -1,0 +1,52 @@
+.container {
+  width: 540px;
+  font-size: 13px;
+  padding-bottom: 10px;
+
+  .divider {
+    margin: 10px 0;
+  }
+
+  .shapeContainer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    margin: 40px 0;
+
+    .shape {
+      width: 80px;
+      height: 80px;
+      box-sizing: border-box;
+      cursor: pointer;
+    }
+
+    .square {
+      background-color: #97c6ec;
+    }
+
+    .squareWithRadius {
+      background-color: #97c6ec;
+      border-radius: 14px;
+    }
+
+    .squareWithNoBackground {
+      border: 2px solid #000;
+    }
+
+    .circleWithBorder {
+      border-radius: 50%;
+      background-color: #97c6ec;
+      border: 2px solid #000;
+    }
+
+    .circleWithNoBorder {
+      border-radius: 50%;
+      background-color: #97c6ec;
+    }
+
+    .circleWithNoBackground {
+      border-radius: 50%;
+      border: 2px solid #000;
+    }
+  }
+}

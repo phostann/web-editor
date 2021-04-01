@@ -1,6 +1,8 @@
 import {DragItem, SnapShot} from "../store/Store";
 import {XYCoord} from "react-dnd";
 import _ from "lodash";
+import {ItemInfoInterface, MessageInterface} from "../../../interface";
+import {MessageType} from "../../../types/MessageType";
 
 export interface Adsorption {
     left?: number;
@@ -9,15 +11,16 @@ export interface Adsorption {
     showVertical?: number;
 }
 
-type Adsorb = (snapShot: SnapShot, item: DragItem, currentOffset: XYCoord, threshold?: number) => Adsorption | null
+type Utils = (snapShot: SnapShot, item: DragItem, currentOffset: XYCoord, canvasWidth: number, canvasHeight: number, threshold?: number) => Adsorption | null
 
-export const adsorb: Adsorb = (snapShot, item, currentOffset, threshold = 3) => {
+export const adsorb: Utils = (snapShot, item, currentOffset, canvasWidth, canvasHeight, threshold = 3) => {
     const copy = {...currentOffset};
     const size = snapShot.rows.length;
+    const diff = item.borderWidth * 2;
     const left = copy.x;
     const top = copy.y;
-    const width = item.width;
-    const height = item.height;
+    const width = item.width + diff;
+    const height = item.height + diff;
     const right = left + width;
     const bottom = top + height;
     const center = left + width / 2;
@@ -26,6 +29,74 @@ export const adsorb: Adsorb = (snapShot, item, currentOffset, threshold = 3) => 
     let dy = Number.MAX_VALUE;
     let adsorbed = false;
     const adsorption: Adsorption = {};
+
+    // boundary
+    // left
+    if (Math.abs(left) <= threshold) {
+        if (dx > Math.abs(left)) {
+            dx = Math.abs(left);
+            copy.x = 0;
+            adsorption.left = copy.x;
+            adsorption.showVertical = 0;
+            adsorbed = true;
+        }
+    }
+
+    // center
+    if (Math.abs(center - canvasWidth / 2) <= threshold) {
+        if (dx > Math.abs(center - canvasWidth / 2)) {
+            dx = Math.abs(center - canvasWidth / 2);
+            copy.x = canvasWidth / 2 - width / 2;
+            adsorption.left = copy.x;
+            adsorption.showVertical = canvasWidth / 2;
+            adsorbed = true;
+        }
+    }
+
+    // right
+    if (Math.abs(right - canvasWidth) <= threshold) {
+        if (dx > Math.abs(right - canvasWidth)) {
+            dx = Math.abs(right - canvasWidth);
+            copy.x = canvasWidth - width;
+            adsorption.left = copy.x;
+            adsorption.showVertical = canvasWidth - 1;
+            adsorbed = true;
+        }
+    }
+    // top
+    if (Math.abs(top) <= threshold) {
+        if (dy > Math.abs(top)) {
+            dy = Math.abs(top);
+            copy.y = 0;
+            adsorption.top = copy.y;
+            adsorption.showHorizontal = 0;
+            adsorbed = true;
+        }
+    }
+
+    // middle
+    if (Math.abs(middle - canvasHeight / 2) <= threshold) {
+        if (dy > Math.abs(middle - canvasHeight / 2)) {
+            dy = Math.abs(middle - canvasHeight / 2);
+            copy.y = canvasHeight / 2 - height / 2;
+            adsorption.top = copy.y;
+            adsorption.showHorizontal = canvasHeight / 2;
+            adsorbed = true;
+        }
+    }
+
+    // bottom
+    if (Math.abs(bottom - canvasHeight) <= threshold) {
+        if (dy > Math.abs(bottom - canvasHeight)) {
+            dy = Math.abs(bottom - canvasHeight);
+            copy.y = canvasHeight - height;
+            adsorption.top = copy.y;
+            adsorption.showHorizontal = canvasHeight - 1;
+            adsorbed = true;
+        }
+    }
+
+    // item adsorb each other
     for (let i = 0; i < size; i++) {
         const row = snapShot.rows[i];
         const column = snapShot.columns[i];
@@ -95,7 +166,16 @@ export const adsorb: Adsorb = (snapShot, item, currentOffset, threshold = 3) => 
             }
         }
     }
+
     return adsorbed ? adsorption : null;
 };
 
-export const adsorb_n = _.throttle<Adsorb>(adsorb, 16);
+export const adsorb_n = _.throttle<Utils>(adsorb, 16);
+
+export function iframeSendMessage<T>(message: MessageInterface<T>) {
+    window.parent.postMessage(JSON.stringify(message), "*");
+}
+
+export function iframeSendItemInfoChangeMessage(item: DragItem | null) {
+    iframeSendMessage<ItemInfoInterface>({type: MessageType.CHANGE_ITEM, data: item});
+}

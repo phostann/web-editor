@@ -12,12 +12,13 @@ import {CheckCircleFilled, CloseCircleOutlined, DeleteOutlined, PlusOutlined, Up
 import {RcFile} from "antd/lib/upload";
 import {request} from "../../../../utils/request";
 import bgImg from "../../../../assets/images/transparenta-background.png";
-import {HttpResult, PageData} from "../../interface";
+import {HttpResult, PageData} from "../../../../interface";
 import axios from "axios";
 import styles from "./index.module.less";
+import {BASE_URL} from "../../../../confit";
 
 export interface ImgPopoverProps {
-    // onClose: () => void
+    onSelected: (srs: string) => void
 }
 
 type ImgFile = {
@@ -35,7 +36,7 @@ export type ImgPopoverHandle = {
     exitManageMode: () => void
 }
 
-const ImgPopover: ForwardRefRenderFunction<ImgPopoverHandle, ImgPopoverProps> = (props, ref) => {
+const ImgPopover: ForwardRefRenderFunction<ImgPopoverHandle, ImgPopoverProps> = ({onSelected}, ref) => {
 
     const [uploading, setUploading] = useState(false);
 
@@ -239,13 +240,13 @@ const ImgPopover: ForwardRefRenderFunction<ImgPopoverHandle, ImgPopoverProps> = 
         </div>
         <Divider className={styles.divider}/>
         <div className={styles.groupContainer}>
-            <a href={"javascript:void(0)"}
+            <a href="javascript:;"
                className={`${styles.group} ${groupId === undefined ? styles.groupActive : ""}`}
                onClick={() => onGroupChange(undefined)}>全部图片</a>
             {
                 groupList.map(group => <React.Fragment key={group.id}>
                     <Divider className={styles.groupDivider} type={"vertical"}/>
-                    <a href={"javascript:void(0)"}
+                    <a href="javascript:;"
                        className={`${styles.group} ${groupId === group.id ? styles.groupActive : ""}`}
                        onClick={() => onGroupChange(group.id)}>{group.name}</a>
                     {manage ? <Popconfirm title={"删除后图片也会被同时删除"}
@@ -264,7 +265,7 @@ const ImgPopover: ForwardRefRenderFunction<ImgPopoverHandle, ImgPopoverProps> = 
                     {
                         showMoveMenu ? <ul className={styles.moveMenu}>
                             {groupList.map(group => <li key={group.id} onClick={() => onMoveToGroup(group.id)}>
-                                <a href="javascript:void(0)">{group.name}</a>
+                                <a href="javascript:;">{group.name}</a>
                             </li>)}
                         </ul> : null
                     }
@@ -274,9 +275,10 @@ const ImgPopover: ForwardRefRenderFunction<ImgPopoverHandle, ImgPopoverProps> = 
         }
         <div className={styles.imgList}>
             {
-                imgFileList.map(img => <div className={styles.itemItemContainer} key={img.id}>
-                    <a href="javascript:void(0)" className={styles.imgItem}>
-                        <img className={styles.img} src={`http://localhost:8080/${img.path}`}
+                imgFileList.map(img => <div className={styles.itemItemContainer} key={img.id}
+                                            onClick={() => !manage && onSelected(`${BASE_URL}/${img.path}`)}>
+                    <a href="javascript:;" className={styles.imgItem}>
+                        <img className={styles.img} src={`${BASE_URL}/${img.path}`}
                              style={{backgroundImage: `url("${bgImg}")`}} alt={"#"}/>
                     </a>
                     {

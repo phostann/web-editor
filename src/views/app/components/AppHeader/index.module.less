@@ -1,0 +1,40 @@
+.header {
+  height: 50px !important;
+  line-height: 50px !important;
+  display: flex;
+  align-items: center;
+
+  .nav {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+
+    & > span:last-child {
+      .navBtn, .navTag {
+        margin: 0;
+      }
+    }
+
+    .navBtn, .navTag {
+      margin-right: 1px;
+    }
+
+    .navBtn {
+      @media only screen and (max-width: 800px) {
+        display: none;
+      }
+    }
+
+    .navTag {
+      cursor: pointer;
+      @media only screen and (min-width: 800px) {
+        display: none;
+      }
+    }
+  }
+
+
+  .header_save_btn {
+    margin-right: 20px;
+  }
+}

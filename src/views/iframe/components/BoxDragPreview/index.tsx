@@ -5,15 +5,7 @@ import styles from "./index.module.less";
 
 const BoxDragPreview: FC<DragItem> = (props) => {
     return <div className={styles.container}>
-        <div className={styles.dot}/>
-        <div className={styles.dot}/>
-        <div className={styles.dot}/>
-        <div className={styles.dot}/>
-        <div className={styles.dot}/>
-        <div className={styles.dot}/>
-        <div className={styles.dot}/>
-        <div className={styles.dot}/>
-        <Box {...props}/>
+        <Box item={{...props}} currentId={props.id}/>
     </div>
 };
 

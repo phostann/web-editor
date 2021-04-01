@@ -1,0 +1,1 @@
+export const ITEM_LOCKED_MESSAGE = "该组件已被锁定";

@@ -1,6 +1,14 @@
 import {makeAutoObservable} from "mobx"
 import {ItemTypes} from "../types/ItemTypes";
 import {v4 as uuidv4} from 'uuid';
+import {RGBColor} from "react-color";
+
+export enum BorderStyle {
+    SOLID = "solid",
+    DOUBLE = "double",
+    DOTTED = "dotted",
+    DASHED = "dashed",
+}
 
 export interface DragItem {
     id: string;
@@ -14,8 +22,23 @@ export interface DragItem {
     fontSize: number;
     name: string;
     zIndex: number;
+    blur: number; // 模糊度
+    brightness: number; // 亮度
+    opacity: number; // 透明度
+    contrast: number; // 对比度
+    grayscale: number; // 灰度
+    hueRotate: number; // 色相旋转
+    saturate: number; // 饱和度
+    invert: number; // 反色
+    sepia: number; // 褐色滤镜
+    filterChanged: boolean; // 滤镜有没有被修改过
+    locked: boolean;
+    borderColor: RGBColor;
+    borderWidth: number;
+    borderStyle: BorderStyle;
+    borderRadius: number;
+    rotate: number;
 }
-
 
 type ModifyParam = Partial<DragItem> & { id: string };
 
@@ -26,126 +49,51 @@ export interface SnapShot {
 
 export class Store {
 
-    // itemList: DragItem[] = Array.from(new Array(100), (_, v) => ({
-    //     id: uuidv4(),
-    //     left: v * 4,
-    //     top: 0,
-    //     width: 0,
-    //     height: 0,
-    //     type: ItemTypes.IMAGE,
-    //     src: "https://hexo-blog-1259448770.cos.ap-guangzhou.myqcloud.com/uPic/2.jpeg",
-    //     text: "",
-    //     fontSize: 12,
-    //     name: "",
-    //     zIndex: v
-    // }));
+    itemList: DragItem[] = [];
 
-    itemList: DragItem[] = [
-        {
-            id: uuidv4(),
-            left: 0,
-            top: 0,
-            width: 0,
-            height: 0,
-            type: ItemTypes.IMAGE,
-            src: "https://hexo-blog-1259448770.cos.ap-guangzhou.myqcloud.com/uPic/1.jpeg",
-            text: "",
-            fontSize: 12,
-            name: "",
-            zIndex: 0
-        },
-        {
-            id: uuidv4(),
-            left: 0,
-            top: 0,
-            width: 0,
-            height: 0,
-            type: ItemTypes.IMAGE,
-            src: "https://hexo-blog-1259448770.cos.ap-guangzhou.myqcloud.com/uPic/2.jpeg",
-            text: "",
-            fontSize: 12,
-            name: "",
-            zIndex: 1
-        },
-        {
-            id: uuidv4(),
-            left: 0,
-            top: 0,
-            width: 0,
-            height: 0,
-            type: ItemTypes.IMAGE,
-            src: "https://hexo-blog-1259448770.cos.ap-guangzhou.myqcloud.com/uPic/3.jpeg",
-            text: "",
-            fontSize: 12,
-            name: "",
-            zIndex: 2
-        },
-        {
-            id: uuidv4(),
-            left: 0,
-            top: 0,
-            width: 0,
-            height: 0,
-            type: ItemTypes.IMAGE,
-            src: "https://hexo-blog-1259448770.cos.ap-guangzhou.myqcloud.com/uPic/4.jpeg",
-            text: "",
-            fontSize: 12,
-            name: "",
-            zIndex: 3
-        }
-    ];
+    canvasWidth = 1920;
 
-    scale = 1;
+    canvasHeight = 1080;
 
     currentId = "";
 
     snapShot: SnapShot = {rows: [], columns: []};
 
     constructor() {
-        makeAutoObservable(this);
-        this.modifyItem = this.modifyItem.bind(this);
-        this.layoutItem = this.layoutItem.bind(this);
-        this.resizeItem = this.resizeItem.bind(this);
-        this.changeScale = this.changeScale.bind(this);
-        this.changeCurrentId = this.changeCurrentId.bind(this);
-        this.moveItemToFront = this.moveItemToFront.bind(this);
-        this.moveItemToBack = this.moveItemToBack.bind(this);
-        this.moveItemToLeft = this.moveItemToLeft.bind(this);
-        this.moveItemToRight = this.moveItemToRight.bind(this);
-        this.moveItemToCenter = this.moveItemToCenter.bind(this);
-        this.moveItemToTop = this.moveItemToTop.bind(this);
-        this.moveItemToBottom = this.moveItemToBottom.bind(this);
-        this.moveItemToMiddle = this.moveItemToMiddle.bind(this);
-        this.removeItem = this.removeItem.bind(this);
-        this.stepToLeft = this.stepToLeft.bind(this);
-        this.stepToUp = this.stepToUp.bind(this);
-        this.stepToRight = this.stepToRight.bind(this);
-        this.stepToDown = this.stepToDown.bind(this);
-        this.moveItem = this.moveItem.bind(this);
+        makeAutoObservable(this, {}, {autoBind: true});
     }
 
-    private findItemById(id: string) {
+    findItemById(id: string) {
         return this.itemList.find(item => item.id === id);
     }
 
     private generateSnapShot() {
         const snapShop: SnapShot = {rows: [], columns: []};
-        this.itemList.forEach(({id, left, width, top, height}) => {
+        this.itemList.forEach(({id, left, width, top, height, borderWidth}) => {
             snapShop.columns.push({id, left});
-            snapShop.columns.push({id, left: left + width});
-            snapShop.columns.push({id, left: left + width / 2});
+            snapShop.columns.push({id, left: left + width + borderWidth * 2});
+            snapShop.columns.push({id, left: left + (width + borderWidth * 2) / 2});
             snapShop.rows.push({id, top});
-            snapShop.rows.push({id, top: top + height});
-            snapShop.rows.push({id, top: top + height / 2});
+            snapShop.rows.push({id, top: top + height + borderWidth * 2});
+            snapShop.rows.push({id, top: top + (height + borderWidth * 2) / 2});
         });
         this.snapShot = snapShop;
     }
 
+    changeWidth(width: number) {
+        this.canvasWidth = width;
+    }
+
+    changeHeight(height: number) {
+        this.canvasHeight = height;
+    }
+
     modifyItem(param: ModifyParam) {
-        const find = this.findItemById(param.id);
+        const find = this.findItemById(param.id) || null;
         if (find) {
             Object.assign(find, param);
         }
+        return find;
     }
 
     layoutItem(id: string, width: number, height: number) {
@@ -154,17 +102,15 @@ export class Store {
     }
 
     resizeItem(param: ModifyParam) {
-        this.modifyItem(param);
-        this.generateSnapShot();
+        const res = this.modifyItem(param);
+        res && this.generateSnapShot();
+        return res;
     }
 
     moveItem(param: ModifyParam) {
-        this.modifyItem(param);
-        this.generateSnapShot();
-    }
-
-    changeScale(param: number) {
-        this.scale = param;
+        const res = this.modifyItem(param);
+        res && this.generateSnapShot();
+        return res;
     }
 
     changeCurrentId(param: string) {
@@ -181,6 +127,7 @@ export class Store {
             });
             find.zIndex = this.itemList.length - 1;
         }
+        return find;
     }
 
     moveItemToBack(id: string) {
@@ -193,86 +140,121 @@ export class Store {
             });
             find.zIndex = 0;
         }
+        return find;
     }
 
     moveItemToLeft(id: string) {
         const find = this.findItemById(id);
+        let res: DragItem | null = null;
         if (find && find.left !== 0) {
-            this.modifyItem({id, left: 0});
+            res = this.modifyItem({id, left: 0});
         }
-        this.generateSnapShot();
+        res && this.generateSnapShot();
+        return res;
     }
 
     moveItemToRight(id: string) {
         const find = this.findItemById(id);
-        if (find && find.left !== 1920 - find.width) {
-            this.modifyItem({id, left: 1920 - find.width});
+        let res: DragItem | null = null;
+        if (find) {
+            const left = Math.round(this.canvasWidth - (find.width + find.borderWidth * 2));
+            if (find.left !== left) {
+                res = this.modifyItem({id, left});
+            }
         }
-        this.generateSnapShot();
+        res && this.generateSnapShot();
+        return res;
     }
 
     moveItemToCenter(id: string) {
         const find = this.findItemById(id);
-        if (find && find.left !== 1920 / 2 - find.width / 2) {
-            this.modifyItem({id, left: 1920 / 2 - find.width / 2});
+        let res: DragItem | null = null;
+        if (find) {
+            const left = Math.round(this.canvasWidth / 2 - (find.width + find.borderWidth * 2) / 2);
+            if (find.left !== left) {
+                res = this.modifyItem({id, left});
+            }
         }
-        this.generateSnapShot();
+        res && this.generateSnapShot();
+        return res;
     }
 
     moveItemToTop(id: string) {
         const find = this.findItemById(id);
+        let res: DragItem | null = null;
         if (find && find.top !== 0) {
-            this.modifyItem({id, top: 0});
+            res = this.modifyItem({id, top: 0});
         }
-        this.generateSnapShot();
+        res && this.generateSnapShot();
+        return res;
     }
 
     moveItemToBottom(id: string) {
         const find = this.findItemById(id);
-        if (find && find.top !== 1080 - find.height) {
-            this.modifyItem({id, top: 1080 - find.height});
+        let res: DragItem | null = null;
+        if (find) {
+            const top = Math.round(this.canvasHeight - (find.height + find.borderWidth * 2));
+            if (find.top !== top) {
+                res = this.modifyItem({id, top});
+            }
         }
-        this.generateSnapShot();
+        res && this.generateSnapShot();
+        return res;
     }
 
     moveItemToMiddle(id: string) {
         const find = this.findItemById(id);
-        if (find && find.top !== 1080 / 2 - find.height / 2) {
-            this.modifyItem({id, top: 1080 / 2 - find.height / 2});
+        let res: DragItem | null = null;
+        if (find) {
+            const top = Math.round(this.canvasHeight / 2 - (find.height + find.borderWidth * 2) / 2);
+            res = this.modifyItem({id, top});
         }
-        this.generateSnapShot();
+        res && this.generateSnapShot();
+        return res;
+    }
+
+    lockItem(id: string, locked: boolean) {
+        return this.modifyItem({id, locked});
     }
 
     stepToLeft(id: string) {
         const find = this.itemList.find(item => item.id === id);
+        let res: DragItem | null = null;
         if (find) {
-            this.modifyItem({id, left: find.left - 1});
+            res = this.modifyItem({id, left: find.left - 1});
         }
-        this.generateSnapShot();
+        res && this.generateSnapShot();
+        return res;
     }
 
     stepToUp(id: string) {
         const find = this.itemList.find(item => item.id === id);
+        let res: DragItem | null = null;
         if (find) {
-            this.modifyItem({id, top: find.top - 1});
+            res = this.modifyItem({id, top: find.top - 1});
         }
-        this.generateSnapShot();
+        res && this.generateSnapShot();
+        return res;
     }
 
     stepToRight(id: string) {
         const find = this.itemList.find(item => item.id === id);
+        let res: DragItem | null = null;
         if (find) {
-            this.modifyItem({id, left: find.left + 1});
+            res = this.modifyItem({id, left: find.left + 1});
         }
-        this.generateSnapShot();
+        res && this.generateSnapShot();
+        return res;
     }
 
     stepToDown(id: string) {
         const find = this.itemList.find(item => item.id === id);
+        let res: DragItem | null = null;
         if (find) {
-            this.modifyItem({id, top: find.top + 1});
+            res = this.modifyItem({id, top: find.top + 1});
         }
-        this.generateSnapShot();
+        res && this.generateSnapShot();
+        return res;
     }
 
     removeItem(id: string) {
@@ -287,5 +269,39 @@ export class Store {
             this.itemList.splice(findIndex, 1);
         }
         this.generateSnapShot();
+        return null;
+    }
+
+    addImgItem(src: string) {
+        const zIndex = this.itemList.length;
+        this.itemList.push({
+            id: uuidv4(),
+            left: 0,
+            top: 0,
+            width: 0,
+            height: 0,
+            type: ItemTypes.IMAGE,
+            text: "",
+            fontSize: 13,
+            name: "",
+            locked: false,
+            blur: 0, // 模糊度 px
+            brightness: 1, // 亮度
+            opacity: 1, // 透明度
+            contrast: 1, // 对比度
+            grayscale: 0, // 灰度
+            hueRotate: 0, // 色相旋转 deg
+            saturate: 1, // 饱和度
+            invert: 0, // 反色
+            sepia: 0, // 褐色滤镜,
+            filterChanged: false,
+            borderColor: {r: 0, g: 0, b: 0, a: 1},
+            borderWidth: 0,
+            borderStyle: BorderStyle.SOLID,
+            borderRadius: 0,
+            rotate: 0,
+            src,
+            zIndex
+        });
     }
 }

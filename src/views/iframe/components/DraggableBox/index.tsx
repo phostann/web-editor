@@ -5,6 +5,10 @@ import {getEmptyImage} from "react-dnd-html5-backend";
 import Box from "../Box";
 import styles from "./index.module.less";
 import {useStore} from "../../App";
+import {iframeSendItemInfoChangeMessage, iframeSendMessage} from "../../utils/utils";
+import {AntMessageType, MessagePayload} from "../../../../interface";
+import {MessageType} from "../../../../types/MessageType";
+import {ITEM_LOCKED_MESSAGE} from "../../constant/constant";
 
 const getStyle = (isCurrent: boolean, isDragging: boolean, left: number, top: number, zIndex: number): CSSProperties => {
 
@@ -13,64 +17,59 @@ const getStyle = (isCurrent: boolean, isDragging: boolean, left: number, top: nu
     return {
         transform,
         WebkitTransform: transform,
-        outlineColor: isCurrent ? "#61dafb" : "transparent",
         zIndex,
         opacity: isDragging ? 0 : 1,
         height: isDragging ? 0 : "",
     };
 };
 
-export enum MouseDirection {
-    TOP_LEFT = "top_left",
-    TOP_CENTER = "top_center",
-    TOP_RIGHT = "top_right",
-    MIDDLE_RIGHT = "middle_right",
-    BOTTOM_RIGHT = "bottom_right",
-    BOTTOM_CENTER = "bottom_center",
-    BOTTOM_LEFT = "bottom_left",
-    MIDDLE_LEFT = "middle_left"
+export interface DraggableBoxProps {
+    item: DragItem;
+    currentId: string;
 }
 
-const DraggableBox: FC<DragItem & { currentId: string }> = memo((props) => {
+const DraggableBox: FC<DraggableBoxProps> = memo(({item, currentId}) => {
 
     const {changeCurrentId} = useStore();
 
     const [{isDragging}, drag, preview] = useDrag(() => {
         return {
-            type: props.type,
-            item: {...props},
-            collect: (monitor: DragSourceMonitor) => ({
-                isDragging: monitor.isDragging()
-            })
-        }
-    }, [props]);
+            type: item.type,
+            item: item,
+            canDrag: () => {
+                if (item.locked) {
+                    iframeSendMessage<MessagePayload>({
+                        type: MessageType.SHOW_MESSAGE, data: {
+                            type: AntMessageType.WARNING,
+                            message: ITEM_LOCKED_MESSAGE
+                        }
+                    });
+                }
+                return !item.locked;
+            },
+            collect: (monitor: DragSourceMonitor) => {
+                return {
+                    isDragging: monitor.isDragging()
+                }
+            }
+        };
+    }, [item]);
 
     useEffect(() => {
         preview(getEmptyImage(), {captureDraggingState: true});
     }, [preview]);
 
-    const onMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-        changeCurrentId(props.id);
+    const onMouseDown = () => {
+        changeCurrentId(item.id);
+        iframeSendItemInfoChangeMessage(item);
     }
 
     return <div ref={drag}
                 className={styles.container}
-                id={props.id}
+                id={item.id}
                 onMouseDown={onMouseDown}
-                style={getStyle(props.id === props.currentId, isDragging, props.left, props.top, props.zIndex)}>
-        {
-            props.id === props.currentId ? <>
-                <div className={styles.dot} data-direction={MouseDirection.TOP_LEFT}/>
-                <div className={styles.dot} data-direction={MouseDirection.TOP_CENTER}/>
-                <div className={styles.dot} data-direction={MouseDirection.TOP_RIGHT}/>
-                <div className={styles.dot} data-direction={MouseDirection.MIDDLE_RIGHT}/>
-                <div className={styles.dot} data-direction={MouseDirection.BOTTOM_RIGHT}/>
-                <div className={styles.dot} data-direction={MouseDirection.BOTTOM_CENTER}/>
-                <div className={styles.dot} data-direction={MouseDirection.BOTTOM_LEFT}/>
-                <div className={styles.dot} data-direction={MouseDirection.MIDDLE_LEFT}/>
-            </> : null
-        }
-        <Box {...props}/>
+                style={getStyle(item.id === currentId, isDragging, item.left, item.top, item.zIndex)}>
+        <Box item={{...item}} currentId={currentId}/>
     </div>;
 });
 

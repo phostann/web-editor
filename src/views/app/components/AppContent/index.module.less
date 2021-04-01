@@ -1,0 +1,97 @@
+.content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+
+  .editorContainer {
+    flex: 1;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    box-sizing: border-box;
+    padding: 20px 20px 40px 20px;
+    position: relative;
+
+    .editorWrapper {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+
+      .editorBox {
+        width: calc(~"100% + 6px");
+        height: 100%;
+        overflow: auto;
+
+        &::-webkit-scrollbar {
+          width: 6px;
+          height: 6px;
+        }
+
+        &::-webkit-scrollbar-track {
+          border-radius: 3px;
+          background: rgba(0, 0, 0, 0.06);
+          -webkit-box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.08);
+        }
+
+        &::-webkit-scrollbar-thumb {
+          border-radius: 3px;
+          background: rgba(0, 0, 0, 0.12);
+          -webkit-box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+      }
+    }
+
+
+    .canvasController {
+      display: flex;
+      position: absolute;
+      width: 100%;
+      height: 40px;
+      align-items: center;
+      left: 0;
+      bottom: 0;
+      box-sizing: border-box;
+      padding-left: 60px;
+
+      span {
+        line-height: 1;
+        margin: 0 5px;
+      }
+    }
+  }
+
+  .palette {
+    width: 240px;
+    height: 100%;
+    background-color: #ffffff;
+    box-sizing: border-box;
+    padding: 10px 15px;
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    .tabsContainer {
+      height: 100%;
+
+      :global {
+        .ant-tabs-content-top {
+          height: 100%;
+        }
+      }
+    }
+
+    .tabsPanel {
+      height: 100%;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+
+    .noItemTipIcon {
+    }
+
+    .noItemTipTxt {
+      margin-left: 5px;
+    }
+  }
+}

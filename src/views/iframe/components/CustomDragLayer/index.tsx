@@ -4,7 +4,7 @@ import styles from "./index.module.less";
 import BoxDragPreview from "../BoxDragPreview";
 import {useStore} from "../../App";
 import {DragItem} from "../../store/Store";
-import {adsorb_n, Adsorption} from "../../utils/adsorb";
+import {adsorb_n, Adsorption} from "../../utils/utils";
 
 const getStyle = (currentOffset: XYCoord | null): CSSProperties => {
 
@@ -19,25 +19,52 @@ const getStyle = (currentOffset: XYCoord | null): CSSProperties => {
     const transform = `translate(${x}px, ${y}px)`;
 
     return {
+        transformOrigin: "center",
         transform,
         WebkitTransform: transform,
     };
 }
 
+const getHStyle = (adsorption: Adsorption | null): CSSProperties => {
+    if (!adsorption) {
+        return {
+            display: "none"
+        };
+    } else {
+        return {
+            top: adsorption.showHorizontal !== void 0 ? adsorption.showHorizontal : 0,
+            display: adsorption.showHorizontal !== void 0 ? "block" : "none"
+        };
+    }
+
+}
+
+const getVStyle = (adsorption: Adsorption | null): CSSProperties => {
+    if (!adsorption) {
+        return {
+            display: "none"
+        }
+    } else {
+        return {
+            left: adsorption.showVertical !== void 0 ? adsorption.showVertical : 0,
+            display: adsorption.showVertical !== void 0 ? "block" : "none"
+        };
+    }
+};
+
 const CustomDragLayer = () => {
 
-    const {snapShot} = useStore();
+    const {snapShot, canvasWidth, canvasHeight} = useStore();
 
     const {isDragging, item, currentOffset, adsorption} = useDragLayer(monitor => {
         const currentOffset = monitor.getSourceClientOffset();
         const item = monitor.getItem() as DragItem;
         let adsorption = null;
         if (currentOffset && item) {
-
-            adsorption = adsorb_n(snapShot, item, currentOffset) as Adsorption | null;
+            adsorption = adsorb_n(snapShot, item, currentOffset, canvasWidth, canvasHeight) as Adsorption | null;
             if (adsorption) {
-                adsorption.left && (currentOffset.x = adsorption.left);
-                adsorption.top && (currentOffset.y = adsorption.top);
+                (adsorption.left !== void 0) && (currentOffset.x = adsorption.left);
+                (adsorption.top !== void 0) && (currentOffset.y = adsorption.top);
             }
         }
         return {
@@ -57,9 +84,9 @@ const CustomDragLayer = () => {
             <BoxDragPreview {...item}/>
         </div>
         <div className={styles.horizontal}
-             style={{top: adsorption?.showHorizontal || 0, display: adsorption?.showHorizontal ? "block" : "none"}}/>
+             style={getHStyle(adsorption)}/>
         <div className={styles.vertical}
-             style={{left: adsorption?.showVertical || 0, display: adsorption?.showVertical ? "block" : "none"}}/>
+             style={getVStyle(adsorption)}/>
     </div>;
 }
 export default CustomDragLayer;
