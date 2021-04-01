@@ -117,7 +117,6 @@ const Container = observer(() => {
 
             const {clientX, clientY} = e;
             const x = Math.round(clientX);
-
             const y = Math.round(clientY);
             const doubleBorder = item.borderWidth * 2;
             let width = item.width + doubleBorder;
@@ -149,13 +148,17 @@ const Container = observer(() => {
                     // }
                     break;
                 case MouseDirection.TOP_CENTER:
-                    if (y <= bottom - 1 - doubleBorder) {
+                    if (y <= bottom - 1) {
                         top = y;
-                        height = bottom - top - doubleBorder;
-                        res = resizeItem({id: currentId, top, height});
+                        height = bottom - y;
+                        resizeItem({id: currentId, top, height});
                     }
                     break;
                 case MouseDirection.TOP_RIGHT:
+                    const _bottom = item.top + item.height;
+                    if (y <= _bottom - 1) {
+                        resizeItem({id: currentId, top: y, height: _bottom - y});
+                    }
                     // if (x >= left + 1 + diff) {
                     //     width = x - left - diff;
                     //     res = resizeItem({id: currentId, width});
@@ -167,11 +170,11 @@ const Container = observer(() => {
                     // }
                     break;
                 case MouseDirection.MIDDLE_RIGHT: {
-                    diff = halfWidth - halfWidth * Math.cos(item.rotate * Math.PI / 180);
-                    if (x + diff >= left + 1 + doubleBorder) {
-                        width = Math.round(x + diff - left - doubleBorder);
-                        res = resizeItem({id: currentId, width});
-                    }
+                    // diff = halfWidth - halfWidth * Math.cos(item.rotate * Math.PI / 180);
+                    // if (x + diff >= left + 1 + doubleBorder) {
+                    //     width = Math.round(x + diff - left - doubleBorder);
+                    //     res = resizeItem({id: currentId, width});
+                    // }
                     break;
                 }
                 case MouseDirection.BOTTOM_RIGHT:
@@ -209,7 +212,7 @@ const Container = observer(() => {
                     // }
                     break;
             }
-            iframeSendItemInfoChangeMessage(res)
+            // iframeSendItemInfoChangeMessage(res);
         }, 16);
 
         window.addEventListener("mousemove", onMouseMove, false);
