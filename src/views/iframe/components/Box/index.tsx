@@ -17,7 +17,7 @@ export enum MouseDirection {
 }
 
 const getContainerStyle = (item: DragItem, isCurrent: boolean): CSSProperties => {
-    const transform = item.rotate ? `rotate(${item.rotate}deg)` : "";
+    const transform = item.rotate ? `rotate(${item.rotate}deg) translateZ(0)` : "";
     return {
         transform,
         WebkitTransform: transform,

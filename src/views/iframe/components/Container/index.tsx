@@ -1,4 +1,4 @@
-import React, {CSSProperties, useEffect, useState} from "react";
+import React, {CSSProperties, useEffect, useRef, useState} from "react";
 import {useStore} from "../../App";
 import {useDrop} from "react-dnd";
 import {ItemTypes} from "../../types/ItemTypes";
@@ -24,13 +24,9 @@ import {MouseDirection} from "../Box";
 
 const MENU_ID = "menu_id";
 
-const getMenuStyle = (scale: number): CSSProperties => {
-    const transform = `scale(${parseFloat((100 / scale).toFixed(6))})`;
-    return {
-        transformOrigin: "left top",
-        transform,
-        WebkitTransform: transform
-    };
+type Client = {
+    X: number;
+    Y: number;
 }
 
 const Container = observer(() => {
@@ -65,6 +61,8 @@ const Container = observer(() => {
         lockItem
     } = useStore();
 
+    const mouseClient = useRef<Client | null>(null);
+
     const [, drop] = useDrop(() => ({
         accept: [ItemTypes.TEXT, ItemTypes.IMAGE, ItemTypes.SHAPE, ItemTypes.SHAPE],
         drop(item: DragItem, monitor) {
@@ -92,6 +90,7 @@ const Container = observer(() => {
     useEffect(() => {
         const onMouseUp = () => {
             setMouseDirection(null);
+            mouseClient.current = null;
         };
 
         window.addEventListener("mouseup", onMouseUp, false);
@@ -103,7 +102,7 @@ const Container = observer(() => {
     // 缩放
     useEffect(() => {
         const onMouseMove = _.throttle((e: MouseEvent) => {
-            if (!mouseDirection) return;
+            if (!mouseDirection || !mouseClient.current) return;
             const item = findItemById(currentId);
             if (!item) return;
             if (item.locked) {
@@ -115,104 +114,110 @@ const Container = observer(() => {
             }
 
 
-            const {clientX, clientY} = e;
-            const x = Math.round(clientX);
-            const y = Math.round(clientY);
-            const doubleBorder = item.borderWidth * 2;
-            let width = item.width + doubleBorder;
-            let height = item.height + doubleBorder;
-            const halfWidth = width / 2;
-            const halfHeight = height / 2;
+            const {X, Y} = mouseClient.current;
+            const x = e.clientX;
+            const y = e.clientY;
+            let width = item.width;
+            let height = item.height;
             let left = item.left;
             let top = item.top;
-            let right = left + width;
-            let bottom = top + height;
-            let center = (left + right) / 2;
-            let middle = item.top + height / 2;
-            let diff = 0;
 
 
             let res: DragItem | null = null;
 
             switch (mouseDirection) {
-                case MouseDirection.TOP_LEFT:
-                    // if (x <= right - 1 - diff) {
-                    //     left = x;
-                    //     width = right - left - diff;
-                    //     res = resizeItem({id: currentId, left, width});
-                    // }
-                    // if (y <= bottom - 1 - diff) {
-                    //     top = y;
-                    //     height = bottom - top - diff;
-                    //     res = resizeItem({id: currentId, top, height});
-                    // }
-                    break;
-                case MouseDirection.TOP_CENTER:
-                    if (y <= bottom - 1) {
-                        top = y;
-                        height = bottom - y;
-                        resizeItem({id: currentId, top, height});
+                case MouseDirection.TOP_LEFT: {
+                    const deltaY = Math.round(y - Y);
+                    if ((height -= deltaY) >= 1) {
+                        mouseClient.current!!.Y = y;
+                        top += deltaY;
+                        res = resizeItem({id: currentId, height, top});
                     }
-                    break;
-                case MouseDirection.TOP_RIGHT:
-                    const _bottom = item.top + item.height;
-                    if (y <= _bottom - 1) {
-                        resizeItem({id: currentId, top: y, height: _bottom - y});
+                    const deltaX = Math.round(x - X);
+                    if ((width -= deltaX) >= 1) {
+                        mouseClient.current!!.X = x;
+                        left += deltaX;
+                        res = resizeItem({id: currentId, left, width});
                     }
-                    // if (x >= left + 1 + diff) {
-                    //     width = x - left - diff;
-                    //     res = resizeItem({id: currentId, width});
-                    // }
-                    // if (y <= bottom - 1 - diff) {
-                    //     top = y;
-                    //     height = bottom - top - diff;
-                    //     res = resizeItem({id: currentId, top, height});
-                    // }
-                    break;
-                case MouseDirection.MIDDLE_RIGHT: {
-                    // diff = halfWidth - halfWidth * Math.cos(item.rotate * Math.PI / 180);
-                    // if (x + diff >= left + 1 + doubleBorder) {
-                    //     width = Math.round(x + diff - left - doubleBorder);
-                    //     res = resizeItem({id: currentId, width});
-                    // }
                     break;
                 }
-                case MouseDirection.BOTTOM_RIGHT:
-                    // if (x >= left + 1 + diff) {
-                    //     width = x - left - diff;
-                    //     res = resizeItem({id: currentId, width});
-                    // }
-                    // if (y >= top + 1 + diff) {
-                    //     height = y - top - diff;
-                    //     res = resizeItem({id: currentId, height});
-                    // }
+                case MouseDirection.TOP_CENTER: {
+                    const deltaY = Math.round(y - Y);
+                    if ((height -= deltaY) >= 1) {
+                        mouseClient.current!!.Y = y;
+                        top += deltaY;
+                        res = resizeItem({id: currentId, height, top});
+                    }
                     break;
-                case MouseDirection.BOTTOM_CENTER:
-                    // if (y >= top + 1 + diff) {
-                    //     height = y - top - diff;
-                    //     res = resizeItem({id: currentId, height});
-                    // }
+                }
+                case MouseDirection.TOP_RIGHT: {
+                    const deltaY = Math.round(y - Y);
+                    if ((height -= deltaY) >= 1) {
+                        mouseClient.current!!.Y = y;
+                        top += deltaY;
+                        res = resizeItem({id: currentId, height, top});
+                    }
+                    const deltaX = Math.round(x - X);
+                    if ((width += deltaX) >= 1) {
+                        mouseClient.current!!.X = x;
+                        res = resizeItem({id: currentId, width});
+                    }
                     break;
+                }
+
+                case MouseDirection.MIDDLE_RIGHT: {
+                    const deltaX = Math.round(x - X);
+                    if ((width += deltaX) >= 1) {
+                        mouseClient.current!!.X = x;
+                        res = resizeItem({id: currentId, width});
+                    }
+                    break;
+                }
+                case MouseDirection.BOTTOM_RIGHT: {
+                    const deltaX = Math.round(x - X);
+                    if ((width += deltaX) >= 1) {
+                        mouseClient.current!!.X = x;
+                        res = resizeItem({id: currentId, width});
+                    }
+                    const deltaY = Math.round(y - Y);
+                    if ((height += deltaY) >= 1) {
+                        mouseClient.current!!.Y = y;
+                        res = resizeItem({id: currentId, height});
+                    }
+                    break;
+                }
+                case MouseDirection.BOTTOM_CENTER: {
+                    const deltaY = Math.round(y - Y);
+                    if ((height += deltaY) >= 1) {
+                        mouseClient.current!!.Y = y;
+                        res = resizeItem({id: currentId, height});
+                    }
+                    break;
+                }
                 case MouseDirection.BOTTOM_LEFT:
-                    // if (x <= right - 1 - diff) {
-                    //     left = x;
-                    //     width = right - left - diff;
-                    //     res = resizeItem({id: currentId, left, width});
-                    // }
-                    // if (y >= top + 1 + diff) {
-                    //     height = y - top - diff;
-                    //     res = resizeItem({id: currentId, height});
-                    // }
+                    const deltaX = Math.round(x - X);
+                    if ((width -= deltaX) >= 1) {
+                        mouseClient.current!!.X = x;
+                        left += deltaX;
+                        res = resizeItem({id: currentId, left, width});
+                    }
+                    const deltaY = Math.round(y - Y);
+                    if ((height += deltaY) >= 1) {
+                        mouseClient.current!!.Y = y;
+                        res = resizeItem({id: currentId, height});
+                    }
                     break;
-                case MouseDirection.MIDDLE_LEFT:
-                    // if (x <= right - 1 - diff) {
-                    //     left = x;
-                    //     width = right - left - diff;
-                    //     res = resizeItem({id: currentId, left, width});
-                    // }
+                case MouseDirection.MIDDLE_LEFT: {
+                    const deltaX = Math.round(x - X);
+                    if ((width -= deltaX) >= 1) {
+                        mouseClient.current!!.X = x;
+                        left += deltaX;
+                        res = resizeItem({id: currentId, left, width});
+                    }
                     break;
+                }
             }
-            // iframeSendItemInfoChangeMessage(res);
+            iframeSendItemInfoChangeMessage(res);
         }, 16);
 
         window.addEventListener("mousemove", onMouseMove, false);
@@ -280,6 +285,7 @@ const Container = observer(() => {
         if (target.dataset.direction) {
             e.preventDefault();
             setMouseDirection(target.dataset.direction as string as MouseDirection);
+            mouseClient.current = {X: e.clientX, Y: e.clientY};
         } else if (target.dataset.container === "true") {
             changeCurrentId("");
             iframeSendItemInfoChangeMessage(null);
